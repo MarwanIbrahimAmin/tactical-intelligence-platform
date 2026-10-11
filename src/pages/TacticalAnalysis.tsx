@@ -1,117 +1,184 @@
 import React, { useState } from 'react';
-import { getFrameAtTime } from '../services/simulationEngine';
+import { getFrameAtTime, MATCH_KEYFRAMES } from '../services/simulationEngine';
 import { PitchFrame } from '../types/tactical';
-import { ExpectedActualPitch } from '../components/pitch/ExpectedActualPitch';
-import { FeatureFusionPanel } from '../components/tactical/FeatureFusionPanel';
+import { PitchCanvas } from '../components/pitch/PitchCanvas';
+import { PitchControls, PitchOverlayMode } from '../components/pitch/PitchControls';
 import { PitchTimeline } from '../components/pitch/PitchTimeline';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
-import { BrainCircuit, Layers, Shield, Zap, Cpu } from 'lucide-react';
+import { FeatureFusionPanel } from '../components/tactical/FeatureFusionPanel';
+import { BrainCircuit, Filter } from 'lucide-react';
 
 export const TacticalAnalysis: React.FC = () => {
   const [currentSec, setCurrentSec] = useState<number>(1394); // Default 23:14
+  const [overlayMode, setOverlayMode] = useState<PitchOverlayMode>('actual-vs-expected');
+  const [selectedPhase, setSelectedPhase] = useState<'all' | 'attacking' | 'defensive' | 'transition'>('all');
+  const [showOpponent, setShowOpponent] = useState<boolean>(true);
+  const [showTrails, setShowTrails] = useState<boolean>(false);
+
   const frame: PitchFrame = getFrameAtTime(currentSec);
 
-  const patternOccurrences = [
-    { name: 'Defensive Transition', occurrences: 6, avgDuration: '6.4s', confidence: 92 },
-    { name: 'Attacking Width Expansion', occurrences: 11, avgDuration: '14.2s', confidence: 89 },
-    { name: 'Defensive Line Separation', occurrences: 4, avgDuration: '8.1s', confidence: 94 },
-    { name: 'High-Block Pressing', occurrences: 8, avgDuration: '9.8s', confidence: 91 },
-    { name: 'Off-Ball Overloads', occurrences: 5, avgDuration: '11.5s', confidence: 86 }
-  ];
+  // Filter keyframes by selected phase
+  const filteredKeyframes = MATCH_KEYFRAMES.filter(k => {
+    if (selectedPhase === 'all') return true;
+    if (selectedPhase === 'attacking') return k.phaseKey.includes('attacking') || k.phaseKey === 'build_up';
+    if (selectedPhase === 'defensive') return k.phaseKey.includes('defensive') || k.phaseKey === 'pressing';
+    if (selectedPhase === 'transition') return k.phaseKey.includes('transition');
+    return true;
+  });
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-dark-border pb-4">
+    <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+      {/* Page Title & Phase Selector */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-2xs">
         <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <BrainCircuit className="w-6 h-6 text-cyan-400" />
-            Tactical Intelligence & Deviation Engine
+          <h1 className="text-lg lg:text-xl font-bold text-slate-900 flex items-center gap-2.5">
+            <BrainCircuit className="w-6 h-6 text-[#1F9D55]" />
+            Tactical Analysis: How Did The Team Play?
           </h1>
-          <p className="text-xs text-gray-400 mt-1">Expected vs. Actual Tactical State Inference & Feature Fusion Pipeline</p>
+          <p className="text-xs lg:text-sm text-slate-500 mt-0.5">
+            Unified tactical engine merging Team Shape, Expected vs Actual, and Spatial Telemetry.
+          </p>
+        </div>
+
+        {/* Phase Selector Buttons */}
+        <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+          <span className="text-xs font-semibold text-slate-500 px-2.5 flex items-center gap-1.5">
+            <Filter className="w-3.5 h-3.5" /> Phase:
+          </span>
+          {[
+            { id: 'all', label: 'All Phases' },
+            { id: 'attacking', label: 'Attacking' },
+            { id: 'defensive', label: 'Defensive' },
+            { id: 'transition', label: 'Transition' },
+          ].map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setSelectedPhase(p.id as any)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                selectedPhase === p.id
+                  ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Timeline Scrubber Header for Timestamp Selection */}
-      <PitchTimeline
-        currentSec={currentSec}
-        onSeek={setCurrentSec}
-      />
+      {/* Sequence Scrubber Bar */}
+      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-2xs space-y-3">
+        <div className="flex items-center justify-between text-xs lg:text-sm font-semibold text-slate-600">
+          <span>Match Key Moments ({filteredKeyframes.length} Sequences)</span>
+          <span className="text-[#188245] font-bold">Click to jump pitch moment</span>
+        </div>
+        <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin">
+          {filteredKeyframes.map((k) => {
+            const isSelected = Math.abs(currentSec - k.timeSec) < 45;
+            return (
+              <button
+                key={k.timeSec}
+                onClick={() => setCurrentSec(k.timeSec)}
+                className={`p-3.5 rounded-2xl border text-left shrink-0 w-48 transition-all ${
+                  isSelected
+                    ? 'bg-[#E8F5EE] border-emerald-300 font-semibold shadow-2xs'
+                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-[#188245]">{k.timestamp}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200 uppercase font-semibold">
+                    {k.phaseKey.replace('_', ' ')}
+                  </span>
+                </div>
+                <div className="text-xs lg:text-sm font-bold text-slate-900 truncate mt-1">{k.title}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-      {/* MAJOR SECTION 1: EXPECTED VS ACTUAL TACTICAL STATE (Section 7 & 8) */}
-      <ExpectedActualPitch
-        frame={frame}
-      />
+      {/* Main Pitch Engine + Telemetry Panel (~60% Left / ~40% Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Center Pitch View (7 Spans) */}
+        <div className="lg:col-span-7 space-y-4">
+          <PitchControls
+            activeMode={overlayMode}
+            onSelectMode={setOverlayMode}
+            showOpponent={showOpponent}
+            onToggleOpponent={() => setShowOpponent(!showOpponent)}
+            showTrails={showTrails}
+            onToggleTrails={() => setShowTrails(!showTrails)}
+          />
 
-      {/* MAJOR SECTION 2: FEATURE FUSION & DIMENSIONALITY REDUCTION LAYER (Section 10 & 11) */}
-      <FeatureFusionPanel
-        fusion={frame.featureFusion}
-      />
+          <PitchCanvas
+            frame={frame}
+            overlayMode={overlayMode}
+            showOpponent={showOpponent}
+            showTrails={showTrails}
+          />
 
-      {/* Pattern Breakdown & Zone Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pattern Occurrence Chart */}
-        <div className="bg-dark-card rounded-2xl p-5 border border-dark-border space-y-4 shadow-xl">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2 font-mono">
-              <Zap className="w-4 h-4 text-cyan-400" /> PATTERN OCCURRENCE FREQUENCY
-            </h2>
-            <span className="text-xs font-mono text-gray-400">Match Total: 34 Events</span>
-          </div>
-
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={patternOccurrences} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#1F293D" />
-                <XAxis type="number" stroke="#9CA3AF" fontSize={11} fontFamily="monospace" />
-                <YAxis dataKey="name" type="category" stroke="#9CA3AF" fontSize={11} width={150} fontFamily="sans-serif" />
-                <Tooltip contentStyle={{ backgroundColor: '#0B0F19', borderColor: '#1F293D', fontSize: '12px' }} />
-                <Bar dataKey="occurrences" fill="#10B981" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <PitchTimeline
+            currentSec={currentSec}
+            onSeek={setCurrentSec}
+          />
         </div>
 
-        {/* Spatial Zone Occupancy */}
-        <div className="bg-dark-card rounded-2xl p-5 border border-dark-border space-y-4 shadow-xl">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white flex items-center gap-2 font-mono">
-              <Layers className="w-4 h-4 text-emerald-400" /> SPATIAL ZONE OCCUPANCY %
-            </h2>
-            <span className="text-xs font-mono text-gray-400">Pitch Normalization</span>
+        {/* Right Side Panel: Telemetry & Feature Fusion (5 Spans) */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-2xs space-y-5">
+            <div className="border-b border-slate-100 pb-3.5">
+              <span className="text-xs font-bold text-[#188245] uppercase tracking-wide block">
+                {frame.timestamp} — {frame.phaseLabel}
+              </span>
+              <h2 className="text-base lg:text-lg font-bold text-slate-900 mt-0.5">Moment Tactical Telemetry</h2>
+            </div>
+
+            {/* Inferred Model Alignment */}
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+              <div className="flex items-center justify-between text-xs lg:text-sm font-semibold text-slate-700">
+                <span>Model Alignment Score</span>
+                <span className="text-[#188245] font-extrabold text-lg">{frame.tacticalAlignmentPct}%</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-[#1F9D55] h-full transition-all duration-300"
+                  style={{ width: `${frame.tacticalAlignmentPct}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Phase Specific Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs lg:text-sm">
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                <span className="text-slate-500 text-xs block font-semibold">Compactness Area</span>
+                <div className="text-2xl lg:text-3xl font-extrabold text-slate-900">{frame.compactnessAreaM2} <span className="text-xs text-slate-500 font-semibold">m²</span></div>
+                <span className="text-xs text-slate-500 font-medium">Exp: {frame.expectedState.tacticalState.compactnessAreaM2} m²</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                <span className="text-slate-500 text-xs block font-semibold">Team Width</span>
+                <div className="text-2xl lg:text-3xl font-extrabold text-slate-900">{frame.teamWidthM} <span className="text-xs text-slate-500 font-semibold">m</span></div>
+                <span className="text-xs text-slate-500 font-medium">Exp: {frame.expectedState.tacticalState.teamWidthM} m</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                <span className="text-slate-500 text-xs block font-semibold">Team Depth</span>
+                <div className="text-2xl lg:text-3xl font-extrabold text-slate-900">{frame.teamDepthM} <span className="text-xs text-slate-500 font-semibold">m</span></div>
+                <span className="text-xs text-slate-500 font-medium">Exp: {frame.expectedState.tacticalState.teamDepthM} m</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                <span className="text-slate-500 text-xs block font-semibold">Line Spacing</span>
+                <div className="text-2xl lg:text-3xl font-extrabold text-slate-900">{(frame.attackingLineM - frame.defensiveLineM).toFixed(1)} <span className="text-xs text-slate-500 font-semibold">m</span></div>
+                <span className="text-xs text-[#188245] font-semibold">Coordinated</span>
+              </div>
+            </div>
           </div>
 
-          <div className="h-64 w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: 'Central Midfield (Zone 14)', value: 34, color: '#00F0FF' },
-                    { name: 'Right Flank', value: 24, color: '#10B981' },
-                    { name: 'Left Flank', value: 22, color: '#3B82F6' },
-                    { name: 'Attacking Box', value: 20, color: '#F59E0B' }
-                  ]}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}%`}
-                >
-                  {[
-                    { color: '#00F0FF' },
-                    { color: '#10B981' },
-                    { color: '#3B82F6' },
-                    { color: '#F59E0B' }
-                  ].map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#0B0F19', borderColor: '#1F293D', fontSize: '12px' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {/* AI Feature Fusion Breakdown Panel */}
+          <FeatureFusionPanel
+            fusion={frame.featureFusion}
+          />
         </div>
       </div>
     </div>

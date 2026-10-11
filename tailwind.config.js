@@ -8,34 +8,45 @@ export default {
     extend: {
       colors: {
         pitch: {
-          dark: '#0a1f16',
-          green: '#10b981',
-          emerald: '#059669',
-          accent: '#00ff87',
-          line: 'rgba(255, 255, 255, 0.25)',
+          dark: '#1b5e20',
+          green: '#1F9D55',
+          light: '#2D7D46',
+          bg: '#E8F5EE',
+          line: 'rgba(255, 255, 255, 0.75)',
         },
-        dark: {
-          bg: '#0B0F19',
-          card: '#131927',
-          cardHover: '#1B2438',
-          border: '#1F293D',
-          borderLight: '#2D3B55',
-          text: '#F3F4F6',
-          muted: '#9CA3AF',
+        brand: {
+          50: '#F0FBF5',
+          100: '#E8F5EE',
+          200: '#C7EAD6',
+          500: '#1F9D55',
+          600: '#188245',
+          700: '#126435',
+        },
+        surface: {
+          DEFAULT: '#FFFFFF',
+          ground: '#F7F9F8',
+          subtle: '#F1F5F3',
+          border: '#E2E8F0',
+          borderDark: '#CBD5E1',
+          text: '#0F172A',
+          muted: '#64748B',
         },
         tactical: {
-          primary: '#00F0FF',
-          secondary: '#7000FF',
-          accent: '#FF0055',
-          warning: '#F59E0B',
-          success: '#10B981'
+          primary: '#1F9D55',
+          warning: '#D97706',
+          warningBg: '#FEF3C7',
+          danger: '#DC2626',
+          dangerBg: '#FEE2E2',
+          success: '#16A34A',
+          successBg: '#DCFCE7'
         }
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       }
     },
   },
   plugins: [],
 }
+

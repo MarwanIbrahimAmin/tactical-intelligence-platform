@@ -1,28 +1,17 @@
 import React from 'react';
 import { 
   LayoutDashboard, 
-  Trophy, 
   BrainCircuit, 
   Users, 
-  Shapes, 
-  Activity, 
-  FileSearch, 
-  ShieldCheck, 
-  Settings,
-  UploadCloud
+  FileCheck2,
+  ShieldCheck
 } from 'lucide-react';
 
 export type NavItem = 
-  | 'overview'
-  | 'matches'
+  | 'summary'
   | 'tactical'
   | 'players'
-  | 'shape'
-  | 'physical'
-  | 'evidence'
-  | 'data-quality'
-  | 'acquisition'
-  | 'settings';
+  | 'evidence';
 
 interface SidebarProps {
   activeTab: NavItem;
@@ -31,77 +20,97 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
   const navItems = [
-    { id: 'overview', label: 'Match Overview', icon: LayoutDashboard },
-    { id: 'tactical', label: 'Tactical Analysis', icon: BrainCircuit },
-    { id: 'evidence', label: 'Evidence Review', icon: FileSearch, badge: 'AI' },
-    { id: 'shape', label: 'Team Shape', icon: Shapes },
-    { id: 'players', label: 'Player Analysis', icon: Users },
-    { id: 'physical', label: 'Physical Performance', icon: Activity },
-    { id: 'data-quality', label: 'Data Quality', icon: ShieldCheck, badge: '94%' },
-    { id: 'acquisition', label: 'Match Acquisition', icon: UploadCloud },
-    { id: 'matches', label: 'Matches Archive', icon: Trophy },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { 
+      id: 'summary', 
+      label: 'Match Summary', 
+      subtitle: 'What happened?',
+      icon: LayoutDashboard 
+    },
+    { 
+      id: 'tactical', 
+      label: 'Tactical Analysis', 
+      subtitle: 'How did team play?',
+      icon: BrainCircuit 
+    },
+    { 
+      id: 'players', 
+      label: 'Players', 
+      subtitle: 'Who needs attention?',
+      icon: Users 
+    },
+    { 
+      id: 'evidence', 
+      label: 'Evidence & Insights', 
+      subtitle: 'Proof & metrics',
+      icon: FileCheck2
+    },
   ];
 
   return (
-    <aside className="w-64 bg-dark-card border-r border-dark-border flex flex-col justify-between h-[calc(100vh-65px)] sticky top-[65px] shrink-0">
-      <div className="p-4 space-y-6">
-        {/* Brand identity */}
-        <div className="flex items-center gap-3 px-2 py-1">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">
-            <BrainCircuit className="w-5 h-5" />
+    <aside className="w-72 bg-white border-r border-slate-200 flex flex-col justify-between h-[calc(100vh-65px)] sticky top-[65px] shrink-0 shadow-xs z-20">
+      <div className="p-5 space-y-7">
+        {/* Brand Identity */}
+        <div className="flex items-center gap-3.5 px-2 py-1">
+          <div className="w-10 h-10 rounded-2xl bg-[#E8F5EE] border border-emerald-200 flex items-center justify-center text-[#1F9D55] shadow-2xs shrink-0">
+            <BrainCircuit className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-sm font-bold text-white tracking-wide">TACTICAL AI</div>
-            <div className="text-[10px] text-emerald-400 font-mono tracking-wider uppercase">Intelligence Engine</div>
+            <div className="text-base font-bold text-slate-900 tracking-tight">Tactical AI</div>
+            <div className="text-xs text-[#188245] font-semibold">Intelligence Engine</div>
           </div>
         </div>
 
-        {/* Navigation items */}
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onSelectTab(item.id as NavItem)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all group ${
-                  isActive
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold shadow-sm'
-                    : 'text-gray-400 hover:text-gray-100 hover:bg-dark-cardHover'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-emerald-400' : 'text-gray-500 group-hover:text-gray-300'}`} />
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                    item.badge === 'AI' ? 'bg-cyan-950 text-cyan-400 border border-cyan-500/40' : 'bg-emerald-950 text-emerald-400 border border-emerald-500/30'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
+        {/* 4 Main Navigation Items */}
+        <div className="space-y-2">
+          <div className="px-2.5 pb-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Coach Navigation
+          </div>
+
+          <nav className="space-y-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onSelectTab(item.id as NavItem)}
+                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-200 text-left ${
+                    isActive
+                      ? 'bg-[#E8F5EE] text-[#188245] border border-emerald-200 font-semibold shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent'
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <Icon className={`w-5 h-5 shrink-0 transition-colors ${
+                      isActive ? 'text-[#1F9D55]' : 'text-slate-400'
+                    }`} />
+                    <div>
+                      <div className="text-sm font-bold leading-tight">{item.label}</div>
+                      <div className={`text-xs font-normal mt-0.5 ${
+                        isActive ? 'text-[#188245]' : 'text-slate-400'
+                      }`}>
+                        {item.subtitle}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
-      {/* Footer System Status */}
-      <div className="p-4 border-t border-dark-border">
-        <div className="p-3 rounded-lg bg-dark-bg border border-dark-border space-y-2">
-          <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono">
-            <span>PIPELINE ENGINE</span>
-            <span className="text-emerald-400 font-semibold">ACTIVE</span>
+      {/* Footer System Status summary */}
+      <div className="p-5 border-t border-slate-100 bg-slate-50/50">
+        <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between text-xs text-slate-600 font-semibold">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-[#1F9D55]" /> Match Quality
+            </span>
+            <span className="text-[#188245] font-bold">94% Validated</span>
           </div>
-          <div className="w-full bg-dark-border rounded-full h-1.5 overflow-hidden">
-            <div className="bg-emerald-400 h-full w-[94%]" />
-          </div>
-          <div className="text-[10px] text-gray-500 flex justify-between font-mono">
-            <span>Homography: 0.43m</span>
-            <span>FPS: 25.0</span>
+          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div className="bg-[#1F9D55] h-full w-[94%]" />
           </div>
         </div>
       </div>

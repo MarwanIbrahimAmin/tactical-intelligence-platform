@@ -45,7 +45,7 @@ export const PhysicalPerformance: React.FC = () => {
       {/* Physical Telemetry KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         <MetricCard label="Total Distance" value="108.4" unit="km" trend="up" trendValue="+3.2%" subtitle="Team Total" />
-        <MetricCard label="High-Speed Run" value="18.6" unit="km" trend="up" trendValue="+1.8%" subtitle=">19.8 km/h" statusColor="cyan" />
+        <MetricCard label="High-Speed Run" value="18.6" unit="km" trend="up" trendValue="+1.8%" subtitle=">19.8 km/h" statusColor="emerald" />
         <MetricCard label="Sprint Distance" value="4.2" unit="km" trend="neutral" trendValue="0.0%" subtitle=">25.2 km/h" statusColor="amber" />
         <MetricCard label="Accelerations" value="412" subtitle=">3.0 m/s²" />
         <MetricCard label="Decelerations" value="389" subtitle="<-3.0 m/s²" />
