@@ -167,11 +167,12 @@ npm -v
 ```
 ├── src/
 │   ├── components/
-│   │   ├── common/        # Header, Sidebar, MetricCard
-│   │   ├── evidence/      # Synchronized video/pitch player
-│   │   ├── insights/      # Tactical insights cards
-│   │   ├── pitch/         # PitchCanvas, ExpectedActualPitch, Timeline, Controls
-│   │   └── tactical/      # FeatureFusionPanel, TacticalIntelligenceCard
+│   │   ├── layout/          # New Sidebar layout component
+│   │   ├── shared/          # ClipPlayer, ConfidenceBadge, DataQualityBadge, InsightCard, PitchMap
+│   │   ├── evidence/        # Synchronized video/pitch player
+│   │   ├── insights/        # Tactical insights cards
+│   │   ├── pitch/           # PitchCanvas, ExpectedActualPitch, Timeline, Controls
+│   │   └── tactical/        # FeatureFusionPanel, TacticalIntelligenceCard
 │   ├── data/              # Mock match, player, and tactical events data
 │   ├── pages/             # DashboardOverview, TacticalAnalysis, PlayerAnalysis, etc.
 │   ├── services/          # 90-min Deterministic Match Simulation Engine
