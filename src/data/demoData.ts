@@ -1,0 +1,601 @@
+import {
+  Insight,
+  MatchChunk,
+  MatchInfo,
+  PlayerInfo,
+  PlayerMovementStats,
+  OpponentTendency,
+  OpponentWeakness,
+  TimelineEventMarker,
+  QAEntry,
+} from '../types/tactical';
+
+// ─── Match Info ───
+
+export const CURRENT_MATCH: MatchInfo = {
+  id: 'match-2026-001',
+  homeTeam: 'Al Ahly U19',
+  awayTeam: 'Zamalek U19',
+  homeScore: 2,
+  awayScore: 1,
+  competition: 'U19 Premier League — Matchday 18',
+  date: '2026-09-17',
+  venue: 'Al Ahly Youth Complex, Cairo',
+  durationMins: 90,
+};
+
+// ─── Rosters ───
+
+export const HOME_ROSTER: PlayerInfo[] = [
+  { id: 1, name: 'Mostafa', number: 1, position: 'Goalkeeper', team: 'home' },
+  { id: 2, name: 'Tarek', number: 2, position: 'Right Back', team: 'home' },
+  { id: 3, name: 'Abdelrahman', number: 4, position: 'Centre Back', team: 'home' },
+  { id: 4, name: 'Kareem', number: 5, position: 'Centre Back', team: 'home' },
+  { id: 5, name: 'Youssef', number: 3, position: 'Left Back', team: 'home' },
+  { id: 6, name: 'Marwan', number: 6, position: 'Defensive Midfielder', team: 'home' },
+  { id: 7, name: 'Ahmed', number: 8, position: 'Central Midfielder', team: 'home' },
+  { id: 8, name: 'Ziad', number: 10, position: 'Attacking Midfielder', team: 'home' },
+  { id: 9, name: 'Hamza', number: 7, position: 'Right Winger', team: 'home' },
+  { id: 10, name: 'Omar', number: 9, position: 'Centre Forward', team: 'home' },
+  { id: 11, name: 'Mahmoud', number: 11, position: 'Left Winger', team: 'home' },
+];
+
+export const AWAY_ROSTER: PlayerInfo[] = [
+  { id: 21, name: 'Sobhy', number: 16, position: 'Goalkeeper', team: 'away' },
+  { id: 22, name: 'Hossam', number: 12, position: 'Right Back', team: 'away' },
+  { id: 23, name: 'El-Wensh', number: 14, position: 'Centre Back', team: 'away' },
+  { id: 24, name: 'Alaa', number: 15, position: 'Centre Back', team: 'away' },
+  { id: 25, name: 'Fattoh', number: 13, position: 'Left Back', team: 'away' },
+  { id: 26, name: 'Nabil', number: 18, position: 'Defensive Midfielder', team: 'away' },
+  { id: 27, name: 'Raoof', number: 20, position: 'Central Midfielder', team: 'away' },
+  { id: 28, name: 'Zizo', number: 17, position: 'Right Winger', team: 'away' },
+  { id: 29, name: 'Shikabala', number: 22, position: 'Attacking Midfielder', team: 'away' },
+  { id: 30, name: 'Jaziri', number: 19, position: 'Centre Forward', team: 'away' },
+  { id: 31, name: 'Shalaby', number: 21, position: 'Left Winger', team: 'away' },
+];
+
+// ─── Insights (core data object — every field present) ───
+
+export const INSIGHTS: Insight[] = [
+  {
+    id: 'insight-001',
+    statement: 'Team compactness dropped sharply after losing the ball in midfield',
+    metric: 'Hull area 347 m² vs match average 230 m² (+117 m²)',
+    interval: { start: '23:14', end: '23:20', startSec: 1394, endSec: 1400 },
+    confidence: 'High',
+    dataQuality: 'OK',
+    evidence: { clipRef: 'clip-2314-def-comp', pitchPlotRef: 'plot-2314' },
+    tacticalPattern: 'Loss of compactness after losing possession',
+    metricBefore: '218 m²',
+    metricAfter: '347 m²',
+    formulaExplanation: 'Compactness is the area of the convex hull polygon formed by all outfield players, measured in square metres on the 105 m × 68 m pitch.',
+    limitations: 'Tracking confidence was high (94 %) for this interval. No known occlusion.',
+  },
+  {
+    id: 'insight-002',
+    statement: 'Attacking width expanded to 47.8 m, well beyond the match average of 38 m',
+    metric: 'Team width 47.8 m vs match average 38.0 m (+9.8 m)',
+    interval: { start: '54:31', end: '54:48', startSec: 3271, endSec: 3288 },
+    confidence: 'Medium',
+    dataQuality: 'OK',
+    evidence: { clipRef: 'clip-5431-att-wdth', pitchPlotRef: 'plot-5431' },
+    tacticalPattern: 'Change in attacking width',
+    metricBefore: '34.2 m',
+    metricAfter: '47.8 m',
+    formulaExplanation: 'Width = lateral extent from the left-most to the right-most outfield player, in metres.',
+    limitations: 'Tracking quality OK (96 %). Right winger near touchline had brief occlusion corrected by re-identification.',
+  },
+  {
+    id: 'insight-003',
+    statement: 'Defensive-to-midfield line gap widened to 26.8 m, double the expected spacing',
+    metric: 'Line gap 26.8 m vs expected 13.0 m (+13.8 m)',
+    interval: { start: '67:31', end: '67:45', startSec: 4051, endSec: 4065 },
+    confidence: 'High',
+    dataQuality: 'OK',
+    evidence: { clipRef: 'clip-6731-line-gap', pitchPlotRef: 'plot-6731' },
+    tacticalPattern: 'Change in line spacing',
+    metricBefore: '14.2 m',
+    metricAfter: '26.8 m',
+    formulaExplanation: 'Line spacing = vertical distance between the average y-position of the defensive line and the average y-position of the midfield line, in metres.',
+    limitations: 'Tracking quality OK (92 %). Minor pitch boundary drift (+0.43 m) corrected.',
+  },
+  {
+    id: 'insight-004',
+    statement: 'Coordinated high press pushed 6 players into the opponent build-up zone',
+    metric: '6 players in opponent third vs expected 6 (aligned)',
+    interval: { start: '48:07', end: '48:22', startSec: 2887, endSec: 2902 },
+    confidence: 'High',
+    dataQuality: 'OK',
+    evidence: { clipRef: 'clip-4807-press', pitchPlotRef: 'plot-4807' },
+    tacticalPattern: 'Candidate pressing structure',
+    metricBefore: '3 players',
+    metricAfter: '6 players',
+    formulaExplanation: 'Pressing structure is measured by counting how many outfield players move into the opponent\'s defensive third within a 15-second trigger window.',
+    limitations: 'All players tracked with high confidence (95 %) during this interval.',
+  },
+  {
+    id: 'insight-005',
+    statement: 'Team compactness collapsed again after the 64th-minute equaliser',
+    metric: 'Hull area 312 m² vs match average 230 m² (+82 m²)',
+    interval: { start: '64:30', end: '65:00', startSec: 3870, endSec: 3900 },
+    confidence: 'Medium',
+    dataQuality: 'Uncertain',
+    evidence: { clipRef: 'clip-6430-comp', pitchPlotRef: 'plot-6430' },
+    tacticalPattern: 'Loss of compactness after losing possession',
+    metricBefore: '240 m²',
+    metricAfter: '312 m²',
+    formulaExplanation: 'Compactness is the area of the convex hull polygon formed by all outfield players, measured in square metres.',
+    limitations: 'Tracking had reduced confidence (81 %) due to celebration movement and camera angle shift after the goal. Treat this value as approximate.',
+  },
+  {
+    id: 'insight-006',
+    statement: 'Attacking width narrowed in the final 10 minutes as the team sat deeper',
+    metric: 'Team width 28.4 m vs first-half average 38.0 m (−9.6 m)',
+    interval: { start: '80:00', end: '85:00', startSec: 4800, endSec: 5100 },
+    confidence: 'High',
+    dataQuality: 'OK',
+    evidence: { clipRef: 'clip-8000-narrow', pitchPlotRef: 'plot-8000' },
+    tacticalPattern: 'Change in attacking width',
+    metricBefore: '38.0 m',
+    metricAfter: '28.4 m',
+    formulaExplanation: 'Width = lateral extent from the left-most to the right-most outfield player, in metres.',
+    limitations: 'No known limitations for this interval.',
+  },
+];
+
+// ─── Match Chunks (for Page 2 timeline) ───
+
+export const MATCH_CHUNKS: MatchChunk[] = [
+  {
+    id: 'chunk-01',
+    title: 'Organised Build-Up',
+    summary: 'Both teams settled into shape. Al Ahly controlled possession with patient build-up from the back.',
+    interval: { start: '00:00', end: '15:00', startSec: 0, endSec: 900 },
+    keyMetrics: ['Possession 58 %', 'Width 38 m', 'Compactness 230 m²'],
+    dataQuality: 'OK',
+    insightIds: [],
+    phaseKey: 'build_up',
+  },
+  {
+    id: 'chunk-02',
+    title: 'Compactness Breakdown',
+    summary: 'After losing the ball in midfield, the team shape stretched badly — creating space through the centre.',
+    interval: { start: '20:00', end: '30:00', startSec: 1200, endSec: 1800 },
+    keyMetrics: ['Hull area peaked at 347 m²', 'Recovery time 6 s'],
+    dataQuality: 'OK',
+    insightIds: ['insight-001'],
+    phaseKey: 'defensive_transition',
+  },
+  {
+    id: 'chunk-03',
+    title: 'Goal — Omar (#9) 1-0',
+    summary: 'Quick transition led to Omar finishing from inside the box. Well-structured attacking move.',
+    interval: { start: '31:00', end: '35:00', startSec: 1860, endSec: 2100 },
+    keyMetrics: ['6 passes in build-up', 'Width 41 m'],
+    dataQuality: 'OK',
+    insightIds: [],
+    phaseKey: 'attacking',
+  },
+  {
+    id: 'chunk-04',
+    title: 'Controlled Midfield Phase',
+    summary: 'Patient possession in central areas. No significant tactical deviations.',
+    interval: { start: '35:00', end: '45:00', startSec: 2100, endSec: 2700 },
+    keyMetrics: ['Compactness 245 m²', 'Line spacing 11.8 m'],
+    dataQuality: 'OK',
+    insightIds: [],
+    phaseKey: 'attacking',
+  },
+  {
+    id: 'chunk-05',
+    title: 'High Press Execution',
+    summary: 'Coordinated press at the start of the second half forced Zamalek into mistakes in their build-up zone.',
+    interval: { start: '46:00', end: '50:00', startSec: 2760, endSec: 3000 },
+    keyMetrics: ['6 players in opponent third', 'Press trigger < 2 s'],
+    dataQuality: 'OK',
+    insightIds: ['insight-004'],
+    phaseKey: 'pressing',
+  },
+  {
+    id: 'chunk-06',
+    title: 'Width Expansion',
+    summary: 'Wingers and fullbacks pushed wide, stretching the pitch to nearly 48 m. Opened wing channels.',
+    interval: { start: '52:00', end: '58:00', startSec: 3120, endSec: 3480 },
+    keyMetrics: ['Width peaked at 47.8 m', 'Crosses 3'],
+    dataQuality: 'OK',
+    insightIds: ['insight-002'],
+    phaseKey: 'attacking',
+  },
+  {
+    id: 'chunk-07',
+    title: 'Goal Conceded — Jaziri (#19) 1-1',
+    summary: 'Zamalek exploited the gap between defensive and midfield lines to equalise.',
+    interval: { start: '62:00', end: '66:00', startSec: 3720, endSec: 3960 },
+    keyMetrics: ['Line gap 26.8 m', 'Hull area 312 m²'],
+    dataQuality: 'Uncertain',
+    insightIds: ['insight-003', 'insight-005'],
+    phaseKey: 'defensive',
+  },
+  {
+    id: 'chunk-08',
+    title: 'Regrouping & Narrowing',
+    summary: 'Team dropped deeper, width narrowed. Defensive block formed to protect the result.',
+    interval: { start: '70:00', end: '82:00', startSec: 4200, endSec: 4920 },
+    keyMetrics: ['Width 28.4 m', 'Compactness 195 m²'],
+    dataQuality: 'OK',
+    insightIds: ['insight-006'],
+    phaseKey: 'defensive',
+  },
+  {
+    id: 'chunk-09',
+    title: 'Goal — Hamza (#7) Counter 2-1',
+    summary: 'Fast counter-attack finished by Hamza on the right. Clinical transition from deep block.',
+    interval: { start: '83:00', end: '86:00', startSec: 4980, endSec: 5160 },
+    keyMetrics: ['4-second transition', '3 touches to goal'],
+    dataQuality: 'OK',
+    insightIds: [],
+    phaseKey: 'attacking_transition',
+  },
+  {
+    id: 'chunk-10',
+    title: 'Game Management',
+    summary: 'Compact 4-5-1 block for the final minutes to secure the 2-1 win.',
+    interval: { start: '86:00', end: '90:00', startSec: 5160, endSec: 5400 },
+    keyMetrics: ['Compactness 210 m²', 'Width 33 m'],
+    dataQuality: 'OK',
+    insightIds: [],
+    phaseKey: 'defensive',
+  },
+];
+
+// ─── Halftime Summary (top 3 findings + options) ───
+
+export const HALFTIME_FINDINGS: Insight[] = [INSIGHTS[0], INSIGHTS[3]]; // insight-001 (compactness), insight-004 (press)
+
+export const HALFTIME_OPTIONS: string[] = [
+  'Option A: Drop the defensive line 5 m deeper after losing possession to keep compactness below 250 m².',
+  'Option B: Instruct the #6 (holding midfielder) to sit closer to the centre-back pair during transitions.',
+  'Option C: Continue the high press — it was well-executed and created turnovers.',
+];
+
+// ─── Timeline Event Markers ───
+
+export const MATCH_TIMELINE_EVENTS: TimelineEventMarker[] = [
+  { timeSec: 1394, timestamp: '23:14', type: 'tactical', title: 'Loss of Compactness', insightId: 'insight-001', team: 'home' },
+  { timeSec: 1902, timestamp: '31:42', type: 'goal', title: 'GOAL — Omar (#9) 1-0', team: 'home' },
+  { timeSec: 2520, timestamp: '42:00', type: 'card', title: 'Yellow Card — Marwan (#6)', team: 'home' },
+  { timeSec: 2700, timestamp: '45:00', type: 'half', title: 'Half Time', team: 'home' },
+  { timeSec: 2887, timestamp: '48:07', type: 'tactical', title: 'High Press Execution', insightId: 'insight-004', team: 'home' },
+  { timeSec: 3271, timestamp: '54:31', type: 'tactical', title: 'Width Expansion', insightId: 'insight-002', team: 'home' },
+  { timeSec: 3840, timestamp: '64:00', type: 'goal', title: 'GOAL — Jaziri (#19) 1-1', team: 'away' },
+  { timeSec: 3870, timestamp: '64:30', type: 'tactical', title: 'Post-Goal Compactness Drop', insightId: 'insight-005', team: 'home' },
+  { timeSec: 4051, timestamp: '67:31', type: 'tactical', title: 'Line Separation', insightId: 'insight-003', team: 'home' },
+  { timeSec: 4860, timestamp: '81:00', type: 'goal', title: 'GOAL — Hamza (#7) 2-1', team: 'home' },
+];
+
+// ─── Player Movement Stats ───
+
+export const PLAYER_STATS: PlayerMovementStats[] = [
+  {
+    playerId: 7,
+    minutesPlayed: 90,
+    estimatedDistanceKm: 10.8,
+    estimatedAvgSpeedKmH: 7.2,
+    estimatedMaxSpeedKmH: 29.4,
+    zoneOccupancy: [
+      { zone: 'Central Midfield', percentage: 42 },
+      { zone: 'Attacking Half-Space', percentage: 28 },
+      { zone: 'Defensive Midfield', percentage: 20 },
+      { zone: 'Wide Flank', percentage: 10 },
+    ],
+    heatmapPoints: [
+      { x: 50, y: 40, intensity: 0.9 },
+      { x: 55, y: 35, intensity: 0.8 },
+      { x: 45, y: 45, intensity: 0.7 },
+      { x: 60, y: 50, intensity: 0.6 },
+      { x: 48, y: 42, intensity: 0.85 },
+      { x: 52, y: 38, intensity: 0.75 },
+    ],
+    relatedInsightIds: ['insight-001', 'insight-004'],
+  },
+  {
+    playerId: 6,
+    minutesPlayed: 90,
+    estimatedDistanceKm: 10.1,
+    estimatedAvgSpeedKmH: 6.8,
+    estimatedMaxSpeedKmH: 27.1,
+    zoneOccupancy: [
+      { zone: 'Defensive Midfield', percentage: 55 },
+      { zone: 'Central Midfield', percentage: 30 },
+      { zone: 'Defensive Third', percentage: 15 },
+    ],
+    heatmapPoints: [
+      { x: 42, y: 50, intensity: 0.95 },
+      { x: 38, y: 48, intensity: 0.85 },
+      { x: 45, y: 52, intensity: 0.75 },
+      { x: 40, y: 46, intensity: 0.7 },
+    ],
+    relatedInsightIds: ['insight-001', 'insight-003'],
+  },
+  {
+    playerId: 11,
+    minutesPlayed: 82,
+    estimatedDistanceKm: 10.2,
+    estimatedAvgSpeedKmH: 7.5,
+    estimatedMaxSpeedKmH: 33.8,
+    zoneOccupancy: [
+      { zone: 'Left Wing', percentage: 60 },
+      { zone: 'Attacking Half-Space', percentage: 25 },
+      { zone: 'Penalty Area', percentage: 15 },
+    ],
+    heatmapPoints: [
+      { x: 75, y: 88, intensity: 0.98 },
+      { x: 82, y: 80, intensity: 0.82 },
+      { x: 70, y: 92, intensity: 0.7 },
+      { x: 78, y: 85, intensity: 0.65 },
+    ],
+    relatedInsightIds: ['insight-002', 'insight-006'],
+  },
+  {
+    playerId: 10,
+    minutesPlayed: 90,
+    estimatedDistanceKm: 9.2,
+    estimatedAvgSpeedKmH: 6.1,
+    estimatedMaxSpeedKmH: 31.2,
+    zoneOccupancy: [
+      { zone: 'Penalty Area', percentage: 50 },
+      { zone: 'Attacking Third', percentage: 35 },
+      { zone: 'Central Midfield', percentage: 15 },
+    ],
+    heatmapPoints: [
+      { x: 80, y: 50, intensity: 0.9 },
+      { x: 85, y: 48, intensity: 0.75 },
+      { x: 78, y: 55, intensity: 0.65 },
+    ],
+    relatedInsightIds: [],
+  },
+  {
+    playerId: 9,
+    minutesPlayed: 90,
+    estimatedDistanceKm: 10.5,
+    estimatedAvgSpeedKmH: 7.0,
+    estimatedMaxSpeedKmH: 32.5,
+    zoneOccupancy: [
+      { zone: 'Right Wing', percentage: 55 },
+      { zone: 'Attacking Half-Space', percentage: 25 },
+      { zone: 'Central Midfield', percentage: 20 },
+    ],
+    heatmapPoints: [
+      { x: 75, y: 15, intensity: 0.92 },
+      { x: 80, y: 20, intensity: 0.8 },
+      { x: 70, y: 12, intensity: 0.7 },
+    ],
+    relatedInsightIds: ['insight-002', 'insight-004'],
+  },
+  {
+    playerId: 8,
+    minutesPlayed: 90,
+    estimatedDistanceKm: 9.8,
+    estimatedAvgSpeedKmH: 6.5,
+    estimatedMaxSpeedKmH: 28.0,
+    zoneOccupancy: [
+      { zone: 'Attacking Third', percentage: 40 },
+      { zone: 'Central Midfield', percentage: 35 },
+      { zone: 'Attacking Half-Space', percentage: 25 },
+    ],
+    heatmapPoints: [
+      { x: 65, y: 50, intensity: 0.85 },
+      { x: 70, y: 55, intensity: 0.75 },
+      { x: 60, y: 48, intensity: 0.65 },
+    ],
+    relatedInsightIds: ['insight-002'],
+  },
+  {
+    playerId: 2,
+    minutesPlayed: 90,
+    estimatedDistanceKm: 10.0,
+    estimatedAvgSpeedKmH: 6.7,
+    estimatedMaxSpeedKmH: 30.0,
+    zoneOccupancy: [
+      { zone: 'Right Flank', percentage: 55 },
+      { zone: 'Defensive Third', percentage: 30 },
+      { zone: 'Central Midfield', percentage: 15 },
+    ],
+    heatmapPoints: [
+      { x: 35, y: 15, intensity: 0.9 },
+      { x: 50, y: 12, intensity: 0.7 },
+      { x: 30, y: 18, intensity: 0.6 },
+    ],
+    relatedInsightIds: ['insight-001'],
+  },
+  {
+    playerId: 3,
+    minutesPlayed: 90,
+    estimatedDistanceKm: 8.5,
+    estimatedAvgSpeedKmH: 5.7,
+    estimatedMaxSpeedKmH: 25.0,
+    zoneOccupancy: [
+      { zone: 'Defensive Third', percentage: 70 },
+      { zone: 'Central Midfield', percentage: 20 },
+      { zone: 'Penalty Area', percentage: 10 },
+    ],
+    heatmapPoints: [
+      { x: 25, y: 40, intensity: 0.95 },
+      { x: 22, y: 38, intensity: 0.8 },
+      { x: 30, y: 42, intensity: 0.6 },
+    ],
+    relatedInsightIds: ['insight-003'],
+  },
+  {
+    playerId: 4,
+    minutesPlayed: 90,
+    estimatedDistanceKm: 8.3,
+    estimatedAvgSpeedKmH: 5.5,
+    estimatedMaxSpeedKmH: 24.5,
+    zoneOccupancy: [
+      { zone: 'Defensive Third', percentage: 68 },
+      { zone: 'Central Midfield', percentage: 22 },
+      { zone: 'Penalty Area', percentage: 10 },
+    ],
+    heatmapPoints: [
+      { x: 25, y: 60, intensity: 0.93 },
+      { x: 22, y: 62, intensity: 0.78 },
+      { x: 28, y: 58, intensity: 0.6 },
+    ],
+    relatedInsightIds: ['insight-003'],
+  },
+  {
+    playerId: 5,
+    minutesPlayed: 90,
+    estimatedDistanceKm: 9.9,
+    estimatedAvgSpeedKmH: 6.6,
+    estimatedMaxSpeedKmH: 29.8,
+    zoneOccupancy: [
+      { zone: 'Left Flank', percentage: 55 },
+      { zone: 'Defensive Third', percentage: 30 },
+      { zone: 'Central Midfield', percentage: 15 },
+    ],
+    heatmapPoints: [
+      { x: 35, y: 85, intensity: 0.9 },
+      { x: 50, y: 88, intensity: 0.7 },
+      { x: 30, y: 82, intensity: 0.6 },
+    ],
+    relatedInsightIds: ['insight-001'],
+  },
+];
+
+// ─── Opponent Tendencies (for Page 1 — Opponent Report) ───
+
+export const OPPONENT_TENDENCIES: OpponentTendency[] = [
+  {
+    id: 'tend-01',
+    title: 'Slow recovery after losing possession',
+    description: 'Zamalek U19 consistently took 6-8 seconds to re-organise defensively after turnovers, leaving central corridors open.',
+    matchesAppeared: 3,
+    totalMatches: 3,
+    clipRefs: ['clip-opp-m1-recovery', 'clip-opp-m2-recovery', 'clip-opp-m3-recovery'],
+    relatedPattern: 'Loss of compactness after losing possession',
+    confidence: 'High',
+    dataQuality: 'OK',
+  },
+  {
+    id: 'tend-02',
+    title: 'Narrow defensive block',
+    description: 'In all three matches, Zamalek defended with a width under 30 m, leaving wide areas vulnerable to overlapping fullbacks.',
+    matchesAppeared: 3,
+    totalMatches: 3,
+    clipRefs: ['clip-opp-m1-narrow', 'clip-opp-m2-narrow', 'clip-opp-m3-narrow'],
+    relatedPattern: 'Change in attacking width',
+    confidence: 'High',
+    dataQuality: 'OK',
+  },
+  {
+    id: 'tend-03',
+    title: 'Large gap between midfield and defensive lines',
+    description: 'Zamalek\'s midfield-to-defence gap averaged 18 m across matches, rising above 22 m in transition moments.',
+    matchesAppeared: 2,
+    totalMatches: 3,
+    clipRefs: ['clip-opp-m1-gap', 'clip-opp-m3-gap'],
+    relatedPattern: 'Change in line spacing',
+    confidence: 'Medium',
+    dataQuality: 'OK',
+  },
+  {
+    id: 'tend-04',
+    title: 'Passive pressing in the first 15 minutes',
+    description: 'Zamalek rarely committed more than 3 players to press in the opening phase, preferring to sit in a medium block.',
+    matchesAppeared: 2,
+    totalMatches: 3,
+    clipRefs: ['clip-opp-m2-press', 'clip-opp-m3-press'],
+    relatedPattern: 'Candidate pressing structure',
+    confidence: 'Medium',
+    dataQuality: 'OK',
+  },
+  {
+    id: 'tend-05',
+    title: 'Build-up through the left side',
+    description: 'Zamalek preferred to build from their left back (Fattoh #13), who received 62 % of first-phase passes.',
+    matchesAppeared: 3,
+    totalMatches: 3,
+    clipRefs: ['clip-opp-m1-left', 'clip-opp-m2-left', 'clip-opp-m3-left'],
+    relatedPattern: 'Change in attacking width',
+    confidence: 'High',
+    dataQuality: 'OK',
+  },
+];
+
+export const OPPONENT_WEAKNESSES: OpponentWeakness[] = [
+  {
+    id: 'weak-01',
+    statement: 'The slow defensive recovery leaves space behind the midfield line during transitions.',
+    options: [
+      'Option A: Play quick vertical passes through the centre within 3 seconds of winning the ball.',
+      'Option B: Use the #10 (attacking midfielder) to receive between the lines during counter-attacks.',
+    ],
+    supportingTendencyIds: ['tend-01', 'tend-03'],
+    confidence: 'High',
+    dataQuality: 'OK',
+  },
+  {
+    id: 'weak-02',
+    statement: 'The narrow defensive block can be stretched by wide overloads.',
+    options: [
+      'Option A: Push both fullbacks high simultaneously to create 2v1 situations on the flanks.',
+      'Option B: Switch play rapidly from one side to the other to exploit the vacated wide space.',
+    ],
+    supportingTendencyIds: ['tend-02'],
+    confidence: 'High',
+    dataQuality: 'OK',
+  },
+  {
+    id: 'weak-03',
+    statement: 'Passive early pressing allows uncontested build-up from the back.',
+    options: [
+      'Option A: Take advantage of the first 15 minutes to establish possession rhythm and move the ball into the attacking third.',
+      'Option B: Use the goalkeeper in build-up play since Zamalek won\'t press high initially.',
+    ],
+    supportingTendencyIds: ['tend-04'],
+    confidence: 'Medium',
+    dataQuality: 'OK',
+  },
+];
+
+// ─── Pre-built Q&A pairs (simulating LLM responses grounded in insights) ───
+
+export const SUGGESTED_QUESTIONS: string[] = [
+  'When did we lose compactness?',
+  'How did the high press perform?',
+  'Why did we concede the equaliser?',
+  'What changed in the second half?',
+];
+
+export const QA_DATABASE: QAEntry[] = [
+  {
+    id: 'qa-01',
+    question: 'When did we lose compactness?',
+    answer: 'The team\'s compactness dropped at two key moments:\n\n1. **23:14 – 23:20**: Hull area expanded from 218 m² to 347 m² after losing the ball in midfield. This was the largest compactness breakdown of the match. (Confidence: High)\n\n2. **64:30 – 65:00**: After conceding the equaliser, hull area rose to 312 m² — though tracking confidence was lower during this period. (Confidence: Medium, Data Quality: Uncertain)',
+    supportingInsightIds: ['insight-001', 'insight-005'],
+    hasEvidence: true,
+  },
+  {
+    id: 'qa-02',
+    question: 'How did the high press perform?',
+    answer: 'The coordinated high press at **48:07 – 48:22** was the best-aligned tactical action of the match. Six players moved into the opponent\'s build-up zone, matching the expected pressing structure exactly.\n\nMetric: 6 players in opponent third vs expected 6. (Confidence: High, Data Quality: OK)',
+    supportingInsightIds: ['insight-004'],
+    hasEvidence: true,
+  },
+  {
+    id: 'qa-03',
+    question: 'Why did we concede the equaliser?',
+    answer: 'Two measured factors contributed:\n\n1. **Line spacing**: At **67:31 – 67:45**, the gap between the defensive and midfield lines widened to 26.8 m (expected: 13 m). This created a pocket of space for the opponent\'s #22 to receive.\n\n2. **Compactness**: Around **64:30**, hull area rose to 312 m² — though this measurement has uncertain data quality due to camera movement after the goal.\n\nThese are measured correlations, not proven causes.',
+    supportingInsightIds: ['insight-003', 'insight-005'],
+    hasEvidence: true,
+  },
+  {
+    id: 'qa-04',
+    question: 'What changed in the second half?',
+    answer: 'Three measurable changes:\n\n1. **Pressing** (48:07): The team executed a coordinated high press (6 players in opponent third) — the best tactical alignment of the match.\n\n2. **Width** (54:31): Attacking width expanded to 47.8 m, stretching the opponent\'s narrow block.\n\n3. **Late narrowing** (80:00 – 85:00): Width dropped to 28.4 m as the team shifted into a deep defensive block to protect the 2-1 lead.',
+    supportingInsightIds: ['insight-004', 'insight-002', 'insight-006'],
+    hasEvidence: true,
+  },
+];

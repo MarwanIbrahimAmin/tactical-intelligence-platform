@@ -1,67 +1,104 @@
+// ─── Core Insight Object (every insight in the app must use this) ───
+
+export type Confidence = 'High' | 'Medium' | 'Low';
+export type DataQuality = 'OK' | 'Uncertain';
+
+export type TacticalPattern =
+  | 'Loss of compactness after losing possession'
+  | 'Change in attacking width'
+  | 'Change in line spacing'
+  | 'Candidate pressing structure';
+
+export const TACTICAL_PATTERN_TOOLTIPS: Record<TacticalPattern, string> = {
+  'Loss of compactness after losing possession':
+    'Compactness = area of the convex hull formed by all outfield players. A spike after losing the ball means the team stretched too far to recover quickly.',
+  'Change in attacking width':
+    'Width = lateral extent (left-most to right-most outfield player) in metres. A large change signals a shift in how the team uses the flanks.',
+  'Change in line spacing':
+    'Line spacing = vertical distance between the defensive line and the midfield line, or between midfield and the forward line. Larger gaps can be exploited.',
+  'Candidate pressing structure':
+    'Pressing structure = count and arrangement of players who push into the opponent\'s build-up zone within a short time window.',
+};
+
+export interface Insight {
+  id: string;
+  statement: string;
+  metric: string;           // measured value + baseline, e.g. "Hull area 1,450 m² vs match average 1,100 m²"
+  interval: { start: string; end: string; startSec: number; endSec: number };
+  confidence: Confidence;
+  dataQuality: DataQuality;
+  evidence: {
+    clipRef: string;        // reference id for video clip
+    pitchPlotRef?: string;  // reference id for pitch snapshot
+  };
+  tacticalPattern: TacticalPattern;
+  metricBefore?: string | number;
+  metricAfter?: string | number;
+  formulaExplanation?: string;
+  limitations?: string;
+}
+
+// ─── Match Chunk (for Page 2 timeline) ───
+
+export interface MatchChunk {
+  id: string;
+  title: string;
+  summary: string;
+  interval: { start: string; end: string; startSec: number; endSec: number };
+  keyMetrics: string[];
+  dataQuality: DataQuality;
+  insightIds: string[];      // links to related insights
+  phaseKey: PhaseKey;
+}
+
+export type PhaseKey =
+  | 'build_up'
+  | 'attacking'
+  | 'defensive'
+  | 'defensive_transition'
+  | 'attacking_transition'
+  | 'pressing';
+
+// ─── Player ───
+
+export interface PlayerInfo {
+  id: number;
+  name: string;
+  number: number;
+  position: string;
+  team: 'home' | 'away';
+}
+
+export interface PlayerMovementStats {
+  playerId: number;
+  minutesPlayed: number;
+  estimatedDistanceKm: number;   // labeled as "movement estimates from video"
+  estimatedAvgSpeedKmH: number;
+  estimatedMaxSpeedKmH: number;
+  zoneOccupancy: { zone: string; percentage: number }[];
+  heatmapPoints: { x: number; y: number; intensity: number }[];
+  relatedInsightIds: string[];
+}
+
+// ─── Pitch Frame (for PitchMap component) ───
+
 export interface PlayerCoordinate {
   id: number;
   name: string;
   number: number;
   position: string;
   team: 'home' | 'away';
-  x: number; // Pitch percentage 0-100 (0=left goal line, 100=right goal line)
-  y: number; // Pitch percentage 0-100 (0=top touch line, 100=bottom touch line)
+  x: number; // 0-100 percentage
+  y: number; // 0-100 percentage
   speedKmH: number;
-  distanceKm: number;
-  highIntensityKm: number;
   currentZone: string;
 }
 
-export interface TacticalState {
-  teamWidthM: number;
-  teamDepthM: number;
-  compactnessAreaM2: number;
-  lineSpacingM: number;
-  pressingIntensityPct: number;
-  synchronizationPct: number;
-  transitionStabilityPct: number;
-}
-
-export interface ReasoningContext {
-  phase: 'build_up' | 'attacking' | 'defensive' | 'defensive_transition' | 'attacking_transition' | 'pressing';
-  phaseLabel: string;
-  possessionState: 'home_possession' | 'away_possession' | 'loose_ball';
-  ballZone: string;
-  scoreContext: string;
-}
-
-export interface ExpectedState {
-  tacticalState: TacticalState;
-  expectedHomePlayers: PlayerCoordinate[];
-  confidencePct: number;
-  reasoningContext: ReasoningContext;
-}
-
-export interface TacticalDeviation {
-  metric: string;
-  expected: number;
-  actual: number;
-  deviation: number;
-  unit: string;
-  severity: 'aligned' | 'moderate' | 'significant';
-  description: string;
-}
-
-export interface FeatureFusionVector {
-  rawFeatureCount: number; // 24 raw tracking features
-  compactFeatureCount: number; // 7 compact dimensions
-  dimensions: {
-    name: string;
-    valuePct: number;
-    description: string;
-  }[];
-}
-
 export interface PitchFrame {
-  timestamp: string; // e.g. "23:14"
+  timestamp: string;
   timeSec: number;
   phaseLabel: string;
-  phaseKey: ReasoningContext['phase'];
+  phaseKey: PhaseKey;
   ball: { x: number; y: number };
   homePlayers: PlayerCoordinate[];
   awayPlayers: PlayerCoordinate[];
@@ -71,79 +108,9 @@ export interface PitchFrame {
   defensiveLineM: number;
   attackingLineM: number;
   centroid: { x: number; y: number };
-
-  // Core AI Expected vs Actual Intelligence
-  expectedState: ExpectedState;
-  actualState: TacticalState;
-  tacticalAlignmentPct: number;
-  alignmentBreakdown: {
-    widthAlignmentPct: number;
-    depthAlignmentPct: number;
-    compactnessAlignmentPct: number;
-    lineCoordinationPct: number;
-  };
-  deviationSeverity: 'aligned' | 'moderate' | 'significant';
-  primaryDeviation?: TacticalDeviation;
-  featureFusion: FeatureFusionVector;
 }
 
-export interface TacticalInsight {
-  id: string;
-  statement: string;
-  tacticalPattern: 'Defensive Transition' | 'Attacking Phase' | 'Pressing Structure' | 'Defensive Line Separation' | 'Off-Ball Movement';
-  startTime: string;
-  endTime: string;
-  startSec: number;
-  endSec: number;
-  metricName: string;
-  expectedValue: number;
-  actualValue: number;
-  deviationValue: number;
-  metricValueBefore: string | number;
-  metricValueAfter: string | number;
-  unit: string;
-  severity: 'aligned' | 'moderate' | 'significant';
-  confidencePct: number;
-  dataQualityPct: number;
-  evidenceRef: string;
-  interpretation: string;
-  numericalTrend: { time: string; value: number; expected: number }[];
-}
-
-export interface PlayerStats {
-  id: number;
-  name: string;
-  number: number;
-  position: string;
-  team: 'home' | 'away';
-  minutesPlayed: number;
-  distanceCoveredKm: number;
-  avgSpeedKmH: number;
-  maxSpeedKmH: number;
-  highIntensityKm: number;
-  sprintCount: number;
-  accelerations: number;
-  decelerations: number;
-  zoneOccupancy: { zone: string; percentage: number }[];
-  heatmapPoints: { x: number; y: number; intensity: number }[];
-}
-
-export interface DataQualityMetrics {
-  trackingQualityPct: number;
-  identityConsistencyPct: number;
-  missingDataPct: number;
-  idSwitchesCount: number;
-  trackContinuityPct: number;
-  pitchCalibrationErrorMeters: number;
-  processingPipeline: {
-    detection: boolean;
-    tracking: boolean;
-    pitchCalibration: boolean;
-    synchronization: boolean;
-    tacticalDetection: boolean;
-  };
-  warnings: { id: string; time: string; text: string; severity: 'low' | 'medium' | 'high' }[];
-}
+// ─── Match Info ───
 
 export interface MatchInfo {
   id: string;
@@ -155,5 +122,48 @@ export interface MatchInfo {
   date: string;
   venue: string;
   durationMins: number;
-  dataSourceStatus: string;
+}
+
+// ─── Opponent Report (Page 1) ───
+
+export interface OpponentTendency {
+  id: string;
+  title: string;
+  description: string;
+  matchesAppeared: number;
+  totalMatches: number;
+  clipRefs: string[];         // one per match where it appeared
+  relatedPattern: TacticalPattern;
+  confidence: Confidence;
+  dataQuality: DataQuality;
+}
+
+export interface OpponentWeakness {
+  id: string;
+  statement: string;
+  options: string[];           // candidate ways to exploit, labeled "Options"
+  supportingTendencyIds: string[];
+  confidence: Confidence;
+  dataQuality: DataQuality;
+}
+
+// ─── Q&A ───
+
+export interface QAEntry {
+  id: string;
+  question: string;
+  answer: string;
+  supportingInsightIds: string[];
+  hasEvidence: boolean;
+}
+
+// ─── Timeline Event Marker ───
+
+export interface TimelineEventMarker {
+  timeSec: number;
+  timestamp: string;
+  type: 'goal' | 'card' | 'tactical' | 'half';
+  title: string;
+  insightId?: string;
+  team: 'home' | 'away';
 }
